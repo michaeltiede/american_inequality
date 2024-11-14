@@ -12,6 +12,7 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.neighbors import NearestNeighbors
 import plotly.graph_objects as go
 import requests
+import json
 
 df = pd.read_csv("data.csv")
 # List of columns to clean and convert
@@ -47,9 +48,8 @@ app = dash.Dash(__name__)
 server = app.server  # This is necessary for gunicorn to recognize the server
 
 # GeoJSON data for counties
-geojson_url = 'https://raw.githubusercontent.com/plotly/datasets/master/geojson-counties-fips.json'
-response = requests.get(geojson_url)
-counties = response.json()
+with open('geojson-counties-fips.json', 'r') as file:
+    counties = json.load(file)
 
 # Layout for the dashboard
 app.layout = html.Div([
