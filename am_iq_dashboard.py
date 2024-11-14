@@ -48,7 +48,7 @@ app = dash.Dash(__name__)
 server = app.server  # This is necessary for gunicorn to recognize the server
 
 # GeoJSON data for counties
-with open('geojson-counties-fips.json', 'r') as file:
+with open('geojson-counties-fips-updated.json', 'r') as file:
     counties = json.load(file)
 
 # Layout for the dashboard
@@ -156,7 +156,7 @@ def display_output(state_input, county_input,variable_input):
     distances = np.linalg.norm((df_scaled[features] - selected_scaled) * weights, axis=1)
 
     # Get the indices of the k nearest neighbors (e.g., 20 similar counties)
-    k = 30
+    k = 50
     indices = distances.argsort()[:k]
 
     # Filter similar counties
@@ -176,8 +176,12 @@ def display_output(state_input, county_input,variable_input):
     similar_counties['Life_expectancy_diff'] = selected_row['Life expectancy'].values[0] - similar_counties['Life expectancy']
     similar_counties['Upward_mobility_diff'] = similar_counties['Upward mobility'] - selected_row['Upward mobility'].values[0]
 
-    # Scale the differences
-    similar_counties[['Income_diff', 'Life_expectancy_diff', 'Upward_mobility_diff']] = scaler.fit_transform(
+    # Now, we will scale the differences using StandardScaler to ensure consistent weightings
+    # Create a new scaler for the differences (since we're not fitting it with the entire dataset)
+    diff_scaler = StandardScaler()
+
+    # Scale the differences for Income, Life expectancy, and Upward mobility
+    similar_counties[['Income_diff', 'Life_expectancy_diff', 'Upward_mobility_diff']] = diff_scaler.fit_transform(
         similar_counties[['Income_diff', 'Life_expectancy_diff', 'Upward_mobility_diff']]
     )
 
@@ -186,17 +190,19 @@ def display_output(state_input, county_input,variable_input):
         similar_counties['Income_diff'] + similar_counties['Upward_mobility_diff']
     )
 
+    similar_counties = similar_counties.drop(index=selected_row.index) 
     ranked_counties = similar_counties.sort_values(by='Combined_diff', ascending=False)
-    top_10_counties = ranked_counties.head(10)
-    # Concatenate the selected county with its ranked neighbors for output
-    output = pd.concat([top_10_counties])
-    output = output.drop(index=selected_row.index)
-
+    # change top_10_counties to point to ranked_counties if  you want the difference rankings
+    top_10_counties = similar_counties.head(10)
+    # output = top_10_counties  # No need to concatenate with selected_row
+    output = top_10_counties
 
     # Display relevant columns
     display_columns = [
         'State', 'County', 'Population','Income', 'Life expectancy','Upward mobility'
     ]
+    selected_row[display_columns] = selected_row[display_columns].round(2)
+    output[display_columns] = output[display_columns].round(2)
 
     # Create the table for the selected county (1 row table)
     selected_county_table = html.Div([
@@ -231,6 +237,8 @@ def display_output(state_input, county_input,variable_input):
         locations='FIPS',
         color=variable_input,
         color_continuous_scale="Viridis",
+        hover_name='County',
+        hover_data={'County': True, variable_input: True},
         scope="usa",
         title=f"Choropleth Map for {variable_input}"
     )
