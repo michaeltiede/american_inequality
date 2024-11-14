@@ -12,38 +12,7 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.neighbors import NearestNeighbors
 import plotly.graph_objects as go
 
-# Authenticate using the service account JSON file
-gc = gspread.service_account(filename='/Users/michaeltiede/Desktop/Michael/american_inequality/service_account.json')
-
-# Open the Google Sheet by name
-sheet = gc.open('Copy of Master Dataset for American Inequality')
-
-# Select the worksheet by title
-worksheet = sheet.worksheet("Demographics")
-social_issues = sheet.worksheet("Social-issues_Key-metrics")
-
-# Get all values starting from the third row
-data = worksheet.get_all_values()
-data2 = social_issues.get_all_values()
-
-# Extract headers from the third row (index 2)
-headers = data[2]  # The headers are in row 3 (index 2)
-headers2 = data2[0]
-
-# Get the data starting from the fourth row (index 3)
-data_rows = data[3:]
-data_rows2 = data2[1:]
-
-# Convert the data to a pandas DataFrame
-df = pd.DataFrame(data_rows, columns=headers)
-df = df[df['County'].str.strip() != '']
-df['Population'] = pd.to_numeric(df['Population'], errors='coerce')
-si_df = pd.DataFrame(data_rows2, columns=headers2)
-si_df['Population'] = pd.to_numeric(si_df['Population'], errors='coerce')
-
-# Perform left join and only bring in the '% Non-Hispanic White' column
-df = df.merge(si_df[['FIPS', 'Percent_White']], on='FIPS', how='left')
-
+df = pd.read_csv("data.csv")
 # List of columns to clean and convert
 columns_to_clean = ['Income', 'Unemployment', 'Upward mobility', 'Life expectancy']
 
