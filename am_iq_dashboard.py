@@ -43,6 +43,7 @@ for feature in features:
 # ------------------------------------------------------
 # Create the Dash app
 app = dash.Dash(__name__)
+server = app.server  # This is necessary for gunicorn to recognize the server
 
 # Layout for the dashboard
 app.layout = html.Div([
