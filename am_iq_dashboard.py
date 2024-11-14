@@ -11,6 +11,7 @@ from scipy.stats import percentileofscore
 from sklearn.preprocessing import StandardScaler
 from sklearn.neighbors import NearestNeighbors
 import plotly.graph_objects as go
+import requests
 
 df = pd.read_csv("data.csv")
 # List of columns to clean and convert
@@ -44,6 +45,11 @@ for feature in features:
 # Create the Dash app
 app = dash.Dash(__name__)
 server = app.server  # This is necessary for gunicorn to recognize the server
+
+# GeoJSON data for counties
+geojson_url = 'https://raw.githubusercontent.com/plotly/datasets/master/geojson-counties-fips.json'
+response = requests.get(geojson_url)
+counties = response.json()
 
 # Layout for the dashboard
 app.layout = html.Div([
@@ -80,13 +86,23 @@ app.layout = html.Div([
             {'label': 'Upward Mobility', 'value': 'Upward mobility'}
         ],
         value='Income',  # default value
-        placeholder="Select a variable to compare"
+        placeholder="Select a variable to compare",
+        style={'width': '50%', 'padding': '10px'}
     ),
 
     html.Br(),
-    # Display the results in a table
-    # Display the selected county's data
-    dcc.Graph(id='income-comparison-bar-chart')  # Add graph for visualization
+      # Main content section with bar chart and map
+    html.Div([
+        # Left column: Bar chart
+        html.Div([
+            dcc.Graph(id='income-comparison-bar-chart')
+        ], style={'width': '48%', 'display': 'inline-block'}),  # Bar chart on the left
+
+        # Right column: Choropleth map
+        html.Div([
+            dcc.Graph(id='choropleth-map')
+        ], style={'width': '48%', 'display': 'inline-block', 'padding-left': '2%'})  # Map on the right
+    ], style={'display': 'flex', 'flex-direction': 'row'})
 ])
 
 # Callback to update the county dropdown based on the state selected
@@ -103,7 +119,8 @@ def update_county_dropdown(state):
 @app.callback(
     [Output('county-data-container', 'children'),
         Output('table-container', 'children'),
-        Output('income-comparison-bar-chart', 'figure')],
+        Output('income-comparison-bar-chart', 'figure'),
+        Output('choropleth-map', 'figure')],
     [Input('state-dropdown', 'value'),
     Input('county-dropdown', 'value'),
     Input('variable-dropdown', 'value')]
@@ -176,8 +193,6 @@ def display_output(state_input, county_input,variable_input):
     output = output.drop(index=selected_row.index)
 
 
-
-
     # Display relevant columns
     display_columns = [
         'State', 'County', 'Population','Income', 'Life expectancy','Upward mobility'
@@ -192,7 +207,7 @@ def display_output(state_input, county_input,variable_input):
         )
     ])
 
-        # Create DataTable for similar counties
+    # Create DataTable for similar counties
     similar_counties_table = html.Div([
         html.H3(f"Top Similar Counties to {county_input}, {state_input}"),
         dash.dash_table.DataTable(
@@ -201,24 +216,29 @@ def display_output(state_input, county_input,variable_input):
         )
     ])
 
-     # Create bar chart comparing income
-    fig = go.Figure()
-    fig.add_trace(go.Bar(
-        x=top_10_counties['County'],
-        y=top_10_counties[variable_input],
-        name=variable_input,
-        marker=dict(color='blue')
-    ))
- 
-    fig.update_layout(
-        barmode='group',
-        title=f"{variable_input} Comparison: {county_input}, {state_input} vs. Similar Counties",
-        xaxis_title="County",
-        yaxis_title=variable_input,
-        showlegend=True
+    # Create the bar chart for variable comparison
+    bar_fig = px.bar(
+        top_10_counties,
+        x='County',
+        y=variable_input,
+        title=f"Top 10 Similar Counties' {variable_input} Comparison"
     )
 
-    return selected_county_table ,similar_counties_table, fig
+    # Create the choropleth map
+    choropleth_fig = px.choropleth(
+        top_10_counties,
+        geojson=counties,
+        locations='FIPS',
+        color=variable_input,
+        color_continuous_scale="Viridis",
+        scope="usa",
+        title=f"Choropleth Map for {variable_input}"
+    )
+
+    choropleth_fig.update_geos(fitbounds="locations")
+
+    return selected_county_table, similar_counties_table, bar_fig, choropleth_fig
+
 
 if __name__ == '__main__':
     app.run_server(debug=True)
