@@ -16,7 +16,6 @@ import json
 
 df = pd.read_csv("data.csv")
 # List of columns to clean and convert
-<<<<<<< HEAD
 columns_to_clean = ['Income', 'Upward mobility', 'Life Expectancy']
 
 # Replace non-numeric characters and convert to float
@@ -27,23 +26,10 @@ for col in columns_to_clean:
 for col in columns_to_clean:
     df[col] = df[col].fillna(df[col].mean())
 
-=======
-columns_to_clean = ['Income', 'Unemployment', 'Upward mobility', 'Life expectancy']
-
-# Remove non-numeric characters and convert to numeric, coercing errors to NaN
-df[columns_to_clean] = df[columns_to_clean].replace(r'[^0-9.]', '', regex=True)
-
-# Convert columns to numeric
-df[columns_to_clean] = df[columns_to_clean].apply(pd.to_numeric, errors='coerce')
-
-# Fill NaN values with the mean of each column
-df[columns_to_clean] = df[columns_to_clean].apply(lambda col: col.fillna(col.mean()))
->>>>>>> f68859914aa7d403a9140b95db4702661b793cf2
 
 # Calculate population percentiles for each county
 df['population_percentile'] = df['Population'].apply(lambda x: percentileofscore(df['Population'], x))
 
-<<<<<<< HEAD
 
 
 # List of features to normalize (racial demographics)
@@ -62,19 +48,6 @@ for feature in features:
 # Calculate population percentiles if not already present
 if 'population_percentile' not in df.columns:
     df['population_percentile'] = pd.qcut(df['Population'], q=100, labels=False)
-=======
-# Define features
-features = ['Population','% Rural','Percent_White','% Non-Hispanic White',
-'% Less than 18 Years of Age','% 65 and Over','% Black',
-'% American Indian or Alaska Native','% Asian','% Native Hawaiian or Other Pacific Islander',
-'% Hispanic','% Not Proficient in English','% Female','% foreign born',
-'less_than_hs_edu','hs_edu','some_college_or_assoc_edu','bachelors_or_higher_edu']
-
-# Convert the features to float
-for feature in features:
-    df[feature] = pd.to_numeric(df[feature], errors='coerce').fillna(0)
-
->>>>>>> f68859914aa7d403a9140b95db4702661b793cf2
 
 # ------------------------------------------------------
 # Create the Dash app
@@ -167,7 +140,6 @@ def display_output(state_input, county_input,variable_input):
     if selected_row.empty:
         return html.Div([html.H3(f"No data found for {county_input}, {state_input}.")])
     
-<<<<<<< HEAD
      # Get the selected row index and its features
      # Get the selected row index and its features
     index = selected_row.index[0]
@@ -230,78 +202,6 @@ def display_output(state_input, county_input,variable_input):
 
     # Display the output
     output[display_columns]
-=======
-    # Get the index of the selected county
-    index = selected_row.index[0]
-    
-    # Extract the features for the selected county
-    selected_features = selected_row[features].values.flatten()
-    
-    # Filter the dataframe for outliers (for training the model)
-    df_filtered = df
-    # Scale the features for the filtered DataFrame (for model training)
-    scaler = StandardScaler()
-    df_scaled = df_filtered[features].copy()
-    df_scaled[features] = scaler.fit_transform(df_scaled[features])
-
-    # Scale the selected county's features as well
-    selected_scaled = scaler.transform([selected_features])
-
-    # Manually adjust the weights of the features
-    weights = np.array([1, 7, 7, 7, 2.5, 3, 3, 7, 3.5, 1, 2, 1, 2.5, 3, 10, 1, 1, 1])
-
-    # Compute weighted distance
-    distances = np.linalg.norm((df_scaled[features] - selected_scaled) * weights, axis=1)
-
-    # Get the indices of the k nearest neighbors (e.g., 20 similar counties)
-    k = 50
-    indices = distances.argsort()[:k]
-
-    # Filter similar counties
-    similar_counties = df_filtered.iloc[indices]
-    
-    # Get the population percentile of the selected county
-    selected_percentile = selected_row['population_percentile'].values[0]
-
-    # Define the range of percentiles to consider (within 5 percentile points)
-    percentile_min = selected_percentile - 3
-    percentile_max = selected_percentile + 3
-    similar_counties = similar_counties[(similar_counties['population_percentile'] >= percentile_min) & 
-                                        (similar_counties['population_percentile'] <= percentile_max)]
-
-    # Calculate differences in outcome variables
-    similar_counties['Income_diff'] = similar_counties['Income'] - selected_row['Income'].values[0]
-    similar_counties['Life_expectancy_diff'] = selected_row['Life expectancy'].values[0] - similar_counties['Life expectancy']
-    similar_counties['Upward_mobility_diff'] = similar_counties['Upward mobility'] - selected_row['Upward mobility'].values[0]
-
-    # Now, we will scale the differences using StandardScaler to ensure consistent weightings
-    # Create a new scaler for the differences (since we're not fitting it with the entire dataset)
-    diff_scaler = StandardScaler()
-
-    # Scale the differences for Income, Life expectancy, and Upward mobility
-    similar_counties[['Income_diff', 'Life_expectancy_diff', 'Upward_mobility_diff']] = diff_scaler.fit_transform(
-        similar_counties[['Income_diff', 'Life_expectancy_diff', 'Upward_mobility_diff']]
-    )
-
-    # Rank counties by largest positive differences
-    similar_counties['Combined_diff'] = (
-        similar_counties['Income_diff'] + similar_counties['Upward_mobility_diff']
-    )
-
-    similar_counties = similar_counties.drop(index=selected_row.index) 
-    ranked_counties = similar_counties.sort_values(by='Combined_diff', ascending=False)
-    # change top_10_counties to point to ranked_counties if  you want the difference rankings
-    top_10_counties = similar_counties.head(10)
-    # output = top_10_counties  # No need to concatenate with selected_row
-    output = top_10_counties
-
-    # Display relevant columns
-    display_columns = [
-        'State', 'County', 'Population','Income', 'Life expectancy','Upward mobility'
-    ]
-    selected_row[display_columns] = selected_row[display_columns].round(2)
-    output[display_columns] = output[display_columns].round(2)
->>>>>>> f68859914aa7d403a9140b95db4702661b793cf2
 
     # Create the table for the selected county (1 row table)
     selected_county_table = html.Div([
@@ -314,11 +214,7 @@ def display_output(state_input, county_input,variable_input):
 
     # Create DataTable for similar counties
     similar_counties_table = html.Div([
-<<<<<<< HEAD
         html.H3(f"Similar Counties to {county_input}, {state_input}"),
-=======
-        html.H3(f"Top Similar Counties to {county_input}, {state_input}"),
->>>>>>> f68859914aa7d403a9140b95db4702661b793cf2
         dash.dash_table.DataTable(
             columns=[{'name': col, 'id': col} for col in display_columns],
             data=top_10_counties[display_columns].to_dict('records')
@@ -330,11 +226,7 @@ def display_output(state_input, county_input,variable_input):
         top_10_counties,
         x='County',
         y=variable_input,
-<<<<<<< HEAD
         title=f"Similar Counties' {variable_input} Comparison"
-=======
-        title=f"Top 10 Similar Counties' {variable_input} Comparison"
->>>>>>> f68859914aa7d403a9140b95db4702661b793cf2
     )
 
     # Create the choropleth map
@@ -356,8 +248,4 @@ def display_output(state_input, county_input,variable_input):
 
 
 if __name__ == '__main__':
-<<<<<<< HEAD
     app.run_server(debug=True)
-=======
-    app.run_server(debug=True)
->>>>>>> f68859914aa7d403a9140b95db4702661b793cf2
