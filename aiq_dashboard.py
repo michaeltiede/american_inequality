@@ -55,7 +55,7 @@ app = dash.Dash(__name__)
 server = app.server  # This is necessary for gunicorn to recognize the server
 
 # GeoJSON data for counties
-with open('geojson-counties-fips-updated.json', 'r') as file:
+with open('geojson-counties-fips.json', 'r') as file:
     counties = json.load(file)
 
 # Layout for the dashboard
