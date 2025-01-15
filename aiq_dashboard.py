@@ -89,7 +89,7 @@ app.layout = html.Div([
         id='variable-dropdown',
         options=[
             {'label': 'Income', 'value': 'Income'},
-            {'label': 'Life Expectancy', 'value': 'Life expectancy'},
+            {'label': 'Life Expectancy', 'value': 'Life Expectancy'},
             {'label': 'Upward Mobility', 'value': 'Upward mobility'}
         ],
         value='Income',  # default value
