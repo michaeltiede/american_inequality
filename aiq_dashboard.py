@@ -61,8 +61,9 @@ with open('geojson-counties-fips.json', 'r') as file:
 # Layout for the dashboard
 app.layout = html.Div([
     # Container for the image and main title
+    
     html.Div([
-        html.Img(src='/AIP_logo.png', style={'height': '100px', 'width': 'auto', 'marginRight': '20px'}),
+        html.Img(src='https://raw.githubusercontent.com/michaeltiede/american_inequality/main/AIP_logo.png', style={'height': '100px', 'width': 'auto', 'marginRight': '20px'}),
         html.Div([
             html.H1(
                 "The American Inequality Project: County Comparison Dashboard",
