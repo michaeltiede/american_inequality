@@ -60,21 +60,56 @@ with open('geojson-counties-fips.json', 'r') as file:
 
 # Layout for the dashboard
 app.layout = html.Div([
-    html.H1("County Comparison Dashboard"),
+    # Container for the image and main title
+    html.Div([
+        html.Img(src='/AIP_logo.png', style={'height': '100px', 'width': 'auto', 'marginRight': '20px'}),
+        html.Div([
+            html.H1(
+                "The American Inequality Project: County Comparison Dashboard",
+                style={'textAlign': 'center', 'marginTop': '20px', 'color': '#4A4A4A', 'fontFamily': 'Inter, sans-serif'}
+            ),
+        ], style={'flex': '1', 'display': 'flex', 'justifyContent': 'center'})
+    ], style={'display': 'flex', 'alignItems': 'center'}),
+
+
+    # Subtitle and Link (Right-Aligned Below Header)
+    html.Div([
+        html.Span("Developed by Michael Tiede", style={'marginLeft': '10px','fontSize': '10px'}),
+        html.A(
+            "American Inequality Website",
+            href="https://www.americaninequality.io/",
+            target="_blank",
+            style={'color': 'blue', 'textDecoration': 'underline'}
+        )
+    ], style={'textAlign': 'left', 'marginTop': '10px', 'marginLeft': '10px', 'color': 'black','fontSize': '10px'}),
     
     # Dropdown for selecting state and county
     dcc.Dropdown(
         id='state-dropdown',
         options=[{'label': state, 'value': state} for state in df['State'].unique()],
         value='South Dakota',  # default value
-        placeholder="Select a State"
+        placeholder="Select a State",
+        style={ 'padding': '10px',  # Add padding for a better look
+        'borderRadius': '5px',  # Rounded corners
+        'backgroundColor': '#FFF0E1',  # Custom background color
+        'color': '#4A4A4A',  # Text color
+        'fontFamily': 'Inter, sans-serif',  # Font style
+        'fontWeight': 'bold'  # Bold font
+        }
     ),
     
     dcc.Dropdown(
         id='county-dropdown',
         options=[],
         value='Oglala Lakota',  # default value
-        placeholder="Select a County"
+        placeholder="Select a County",
+        style={ 'padding': '10px',  # Add padding for a better look
+        'borderRadius': '5px',  # Rounded corners
+        'backgroundColor': '#FFF0E1',  # Custom background color
+        'color': '#4A4A4A',  # Text color
+        'fontFamily': 'Inter, sans-serif',  # Font style
+        'fontWeight': 'bold'  # Bold font
+        }
     ),
 
     html.Br(),
@@ -94,7 +129,13 @@ app.layout = html.Div([
         ],
         value='Income',  # default value
         placeholder="Select a variable to compare",
-        style={'width': '50%', 'padding': '10px'}
+        style={'width': '50%', 'padding': '10px',
+        'borderRadius': '5px',  # Rounded corners
+        'backgroundColor': '#FFF0E1',  # Custom background color
+        'color': '#4A4A4A',  # Text color
+        'fontFamily': 'Inter, sans-serif',  # Font style
+        'fontWeight': 'bold'  # Bold font
+        }
     ),
 
     html.Br(),
@@ -110,7 +151,10 @@ app.layout = html.Div([
             dcc.Graph(id='choropleth-map')
         ], style={'width': '48%', 'display': 'inline-block', 'padding-left': '2%'})  # Map on the right
     ], style={'display': 'flex', 'flex-direction': 'row'})
-])
+]# Cream background and padding for the entire dashboard
+, style={'backgroundColor': '#F7E1C4', 'padding': '20px', 'fontFamily': 'Inter, sans-serif'})  
+
+
 
 # Callback to update the county dropdown based on the state selected
 @app.callback(
@@ -208,7 +252,17 @@ def display_output(state_input, county_input,variable_input):
         html.H3(f"Selected County: {county_input}, {state_input}"),
         dash.dash_table.DataTable(
             columns=[{'name': col, 'id': col} for col in display_columns],
-            data=selected_row[display_columns].to_dict('records')
+            data=selected_row[display_columns].to_dict('records'),
+            style_header={
+                'backgroundColor': '#FFF0E1',  # Light cream background color for header
+                'border': '1px solid #8B4513',  # Brown border color
+                'fontFamily': 'Inter, sans-serif'  # Font style
+            },
+            style_cell={
+                'backgroundColor': '#FFF0E1',  # Light cream background color for cells
+                'border': '1px solid #8B4513',  # Brown border color
+                'fontFamily': 'Inter, sans-serif'  # Font style
+            }
         )
     ])
 
@@ -217,7 +271,17 @@ def display_output(state_input, county_input,variable_input):
         html.H3(f"Similar Counties to {county_input}, {state_input}"),
         dash.dash_table.DataTable(
             columns=[{'name': col, 'id': col} for col in display_columns],
-            data=top_10_counties[display_columns].to_dict('records')
+            data=top_10_counties[display_columns].to_dict('records'),
+            style_header={
+                'backgroundColor': '#FFF0E1',  # Light cream background color for header
+                'border': '1px solid #8B4513',  # Brown border color
+                'fontFamily': 'Inter, sans-serif'  # Font style
+            },
+            style_cell={
+                'backgroundColor': '#FFF0E1',  # Light cream background color for cells
+                'border': '1px solid #8B4513',  # Brown border color
+                'fontFamily': 'Inter, sans-serif'  # Font style
+            }
         )
     ])
 
@@ -225,8 +289,16 @@ def display_output(state_input, county_input,variable_input):
     bar_fig = px.bar(
         top_10_counties,
         x='County',
-        y=variable_input,
-        title=f"Similar Counties' {variable_input} Comparison"
+        y=variable_input
+        # title=f"{variable_input} Compared to Similar Counties"
+    )
+    bar_fig.update_layout(
+        plot_bgcolor='#FFF0E1',  # Light cream background color for the plot area
+        paper_bgcolor='#FFF0E1',  # Light cream background color for the entire figure
+        title={
+            'text': f"{variable_input} Compared to Similar Counties",
+            'font': {'size': 20, 'color': '#4A4A4A', 'family': 'Inter, sans-serif', 'weight': 'bold'}
+        }
     )
 
     # Create the choropleth map
@@ -238,8 +310,15 @@ def display_output(state_input, county_input,variable_input):
         color_continuous_scale="Viridis",
         hover_name='County',
         hover_data={'County': True, variable_input: True},
-        scope="usa",
-        title=f"Choropleth Map for {variable_input}"
+        scope="usa"
+    )
+    choropleth_fig.update_layout(
+        plot_bgcolor='#FFF0E1',  # Light cream background color for the plot area
+        paper_bgcolor='#FFF0E1',  # Light cream background color for the entire figure
+        title={
+            'text': f"Choropleth Map for {variable_input}",
+            'font': {'size': 20, 'color': '#4A4A4A', 'family': 'Inter, sans-serif', 'weight': 'bold'}
+        }
     )
 
     choropleth_fig.update_geos(fitbounds="locations")
