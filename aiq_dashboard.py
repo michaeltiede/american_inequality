@@ -75,14 +75,14 @@ app.layout = html.Div([
 
     # Subtitle and Link (Right-Aligned Below Header)
     html.Div([
-        html.Span("Developed by Michael Tiede", style={'marginLeft': '10px','fontSize': '10px'}),
         html.A(
-            "American Inequality Website",
+            "AmericanInequality.io",
             href="https://www.americaninequality.io/",
             target="_blank",
-            style={'color': 'blue', 'textDecoration': 'underline'}
-        )
-    ], style={'textAlign': 'left', 'marginTop': '10px', 'marginLeft': '10px', 'color': 'black','fontSize': '10px'}),
+            style={'color': 'blue', 'textDecoration': 'underline', 'fontSize': '16px', 'marginRight': 'auto'}
+        ),
+        html.Span("Developed by Michael Tiede", style={'marginLeft': 'auto', 'fontSize': '10px'})
+    ], style={'display': 'flex', 'justifyContent': 'space-between', 'alignItems': 'center', 'marginTop': '10px', 'marginLeft': '10px', 'marginRight': '10px', 'color': 'black','marginBottom': '10px'}),
     
     # Dropdown for selecting state and county
     dcc.Dropdown(
