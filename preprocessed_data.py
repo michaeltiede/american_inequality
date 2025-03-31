@@ -66,6 +66,11 @@ all_weights = np.array([race_weights.get(col, non_race_weights.get(col, 1)) for 
 with open('weights.pkl', 'wb') as f:
     pickle.dump(all_weights, f)
 
+# Sort the states and counties alphabetically
+sorted_states = sorted(df['State'].unique())
+sorted_counties = sorted(df[['County', 'State']].sort_values(by='County')['County'].unique())
+
+
 # Save the preprocessed data to a CSV (optional for later use)
 df.to_csv('preprocessed_data.csv', index=False)
 

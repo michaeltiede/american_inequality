@@ -8,7 +8,7 @@ import plotly.graph_objects as go
 import pandas as pd
 import pickle
 import json
-from preprocessed_data import df, features,np  # Import preprocessed data and features
+from preprocessed_data import df, features,np , sorted_states,sorted_counties # Import preprocessed data and features
 
 # Load the pre-trained scaler and weights
 with open('scaler.pkl', 'rb') as f:
@@ -53,8 +53,8 @@ app.layout = html.Div([
     # Dropdown for selecting state and county
     dcc.Dropdown(
         id='state-dropdown',
-        options=[{'label': state, 'value': state} for state in df['State'].unique()],
-        value='California',  # default value
+         options=[{'label': state, 'value': state} for state in sorted(sorted_states)],
+        value='Alabama',  # default value
         placeholder="Select a State",
         style={ 'padding': '10px',  # Add padding for a better look
         'borderRadius': '5px',  # Rounded corners
@@ -67,8 +67,8 @@ app.layout = html.Div([
     
     dcc.Dropdown(
         id='county-dropdown',
-        options=[],
-        value='Imperial',  # default value
+        options=[{'label': county, 'value': county} for county in sorted(sorted_counties)],
+        # value='Imperial',  # default value
         placeholder="Select a County",
         style={ 'padding': '10px',  # Add padding for a better look
         'borderRadius': '5px',  # Rounded corners
