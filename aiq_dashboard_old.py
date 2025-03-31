@@ -1,21 +1,53 @@
-# app.py
-
+import numpy as np
+import pandas as pd
 import dash
-from dash import dcc, html
+from dash import dcc
+from dash import html
 from dash.dependencies import Input, Output
 import plotly.express as px
+import gspread
+from gspread_dataframe import set_with_dataframe
+from scipy.stats import percentileofscore
+from sklearn.preprocessing import StandardScaler
+from sklearn.neighbors import NearestNeighbors
 import plotly.graph_objects as go
-import pandas as pd
-import pickle
+import requests
 import json
-from preprocessed_data import df, features,np  # Import preprocessed data and features
 
-# Load the pre-trained scaler and weights
-with open('scaler.pkl', 'rb') as f:
-    scaler = pickle.load(f)
+df = pd.read_csv("data.csv")
+# List of columns to clean and convert
+columns_to_clean = ['Income', 'Upward mobility', 'Life Expectancy']
 
-with open('weights.pkl', 'rb') as f:
-    all_weights = pickle.load(f)
+# Replace non-numeric characters and convert to float
+for col in columns_to_clean:
+    df[col] = pd.to_numeric(df[col].replace(r'[^0-9.]', '', regex=True), errors='coerce')
+
+# Fill NaN values with the mean of the column, after ensuring the column is numeric
+for col in columns_to_clean:
+    df[col] = df[col].fillna(df[col].mean())
+
+
+# Calculate population percentiles for each county
+df['population_percentile'] = df['Population'].apply(lambda x: percentileofscore(df['Population'], x))
+
+
+
+# List of features to normalize (racial demographics)
+racial_features = ['% Black', 
+                   '% American Indian or Alaska Native', '% Asian',
+                   '% Native Hawaiian or Other Pacific Islander', '% Hispanic', '% Non-Hispanic White']
+
+# Define the features to consider (including the non-racial features)
+other_features = ['Population', '% Rural']
+features = racial_features + other_features
+
+# Convert features to numeric
+for feature in features:
+    df[feature] = pd.to_numeric(df[feature], errors='coerce').fillna(0)
+
+# Calculate population percentiles if not already present
+if 'population_percentile' not in df.columns:
+    df['population_percentile'] = pd.qcut(df['Population'], q=100, labels=False)
 
 # ------------------------------------------------------
 # Create the Dash app
@@ -54,7 +86,7 @@ app.layout = html.Div([
     dcc.Dropdown(
         id='state-dropdown',
         options=[{'label': state, 'value': state} for state in df['State'].unique()],
-        value='California',  # default value
+        value='South Dakota',  # default value
         placeholder="Select a State",
         style={ 'padding': '10px',  # Add padding for a better look
         'borderRadius': '5px',  # Rounded corners
@@ -68,7 +100,7 @@ app.layout = html.Div([
     dcc.Dropdown(
         id='county-dropdown',
         options=[],
-        value='Imperial',  # default value
+        value='Oglala Lakota',  # default value
         placeholder="Select a County",
         style={ 'padding': '10px',  # Add padding for a better look
         'borderRadius': '5px',  # Rounded corners
@@ -121,6 +153,7 @@ app.layout = html.Div([
 ]# Cream background and padding for the entire dashboard
 , style={'backgroundColor': '#F7E1C4', 'padding': '20px', 'fontFamily': 'Inter, sans-serif'})  
 
+
 # Callback to update the county dropdown based on the state selected
 @app.callback(
     Output('county-dropdown', 'options'),
@@ -141,7 +174,7 @@ def update_county_dropdown(state):
     Input('county-dropdown', 'value'),
     Input('variable-dropdown', 'value')]
 )
-def display_output(state_input, county_input, variable_input):
+def display_output(state_input, county_input,variable_input):
     # Filter the dataframe to match the user input
     selected_row = df[(df['State'] == state_input) & (df['County'] == county_input)]
     
@@ -149,15 +182,28 @@ def display_output(state_input, county_input, variable_input):
     if selected_row.empty:
         return html.Div([html.H3(f"No data found for {county_input}, {state_input}.")])
     
-    # Get the selected row index and its features
+     # Get the selected row index and its features
+      # Get the selected row index and its features
     index = selected_row.index[0]
     selected_features = selected_row[features].values.flatten()
 
-    # Scale the features in the DataFrame using the preloaded scaler
-    df_scaled = scaler.transform(df[features])
+    # Scale the features in the DataFrame
+    scaler = StandardScaler()
+    df_scaled = scaler.fit_transform(df[features])
 
     # Scale the selected row's features
     selected_scaled = scaler.transform([selected_features]).flatten()
+
+    # Define custom weights for features
+    race_weights = {col: 50 for col in racial_features}
+    non_race_weights = {'Population': 1, '% Rural': 50}
+
+    # Increase weight for any racial category greater than 30%
+    for col in racial_features:
+        if selected_row[col].values[0] > 30:
+            race_weights[col] *= 5  # Double the weight
+
+    all_weights = np.array([race_weights.get(col, non_race_weights.get(col, 1)) for col in features])
 
     # Compute weighted Euclidean distances
     distances = np.linalg.norm((df_scaled - selected_scaled) * all_weights, axis=1)
@@ -183,7 +229,10 @@ def display_output(state_input, county_input, variable_input):
     ranked_counties = similar_counties.sort_values(by='Income', ascending=False)
     ranked_counties = ranked_counties[ranked_counties.index != index]
 
+     # change top_10_counties to point to ranked_counties if  you want the difference rankings
     top_10_counties = ranked_counties.head(10)
+    # output = top_10_counties  # No need to concatenate with selected_row
+    output = top_10_counties
 
     # Define display columns
     display_columns = ['State', 'County', 'Population', 'Income',
@@ -191,7 +240,7 @@ def display_output(state_input, county_input, variable_input):
                        '% Asian', '% Native Hawaiian or Other Pacific Islander', '% Hispanic']
 
     # Display the output
-    output = top_10_counties[display_columns]
+    output[display_columns]
 
     # Create the table for the selected county (1 row table)
     selected_county_table = html.Div([
@@ -202,19 +251,17 @@ def display_output(state_input, county_input, variable_input):
             style_header={
                 'backgroundColor': '#FFF0E1',  # Light cream background color for header
                 'border': '1px solid #8B4513',  # Brown border color
-                'fontFamily': 'Inter, sans-serif',  # Font style
-                'fontWeight': 'bold' 
+                'fontFamily': 'Inter, sans-serif'  # Font style
             },
             style_cell={
                 'backgroundColor': '#FFF0E1',  # Light cream background color for cells
                 'border': '1px solid #8B4513',  # Brown border color
                 'fontFamily': 'Inter, sans-serif'  # Font style
-                
             }
         )
     ])
 
-   # Create DataTable for similar counties
+    # Create DataTable for similar counties
     similar_counties_table = html.Div([
         html.H3(f"Similar Counties to {county_input}, {state_input}"),
         dash.dash_table.DataTable(
@@ -223,8 +270,7 @@ def display_output(state_input, county_input, variable_input):
             style_header={
                 'backgroundColor': '#FFF0E1',  # Light cream background color for header
                 'border': '1px solid #8B4513',  # Brown border color
-                'fontFamily': 'Inter, sans-serif',  # Font style
-                'fontWeight': 'bold' 
+                'fontFamily': 'Inter, sans-serif'  # Font style
             },
             style_cell={
                 'backgroundColor': '#FFF0E1',  # Light cream background color for cells
@@ -252,7 +298,6 @@ def display_output(state_input, county_input, variable_input):
         }
     )
 
-
     # Create the choropleth map
     choropleth_fig = px.choropleth(
         top_10_counties,
@@ -277,6 +322,6 @@ def display_output(state_input, county_input, variable_input):
 
     return selected_county_table, similar_counties_table, bar_fig, choropleth_fig
 
-# Run the app
+
 if __name__ == '__main__':
     app.run(debug=True)
