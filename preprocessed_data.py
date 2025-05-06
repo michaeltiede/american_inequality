@@ -70,6 +70,8 @@ with open('weights.pkl', 'wb') as f:
 sorted_states = sorted(df['State'].unique())
 sorted_counties = sorted(df[['County', 'State']].sort_values(by='County')['County'].unique())
 
+df['More Info'] = ''
+
 
 # Save the preprocessed data to a CSV (optional for later use)
 df.to_csv('preprocessed_data.csv', index=False)
