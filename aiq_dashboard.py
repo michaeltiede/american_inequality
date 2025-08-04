@@ -49,8 +49,8 @@ app.layout = html.Div([
     # Subtitle and Link (Right-Aligned Below Header)
     html.Div([
         html.A(
-            "AmericanInequality.io",
-            href="https://www.americaninequality.io/",
+            "AmericanInequality.substack.com",
+            href="https://www.americaninequality.substack.com/",
             target="_blank",
             style={'color': 'blue', 'textDecoration': 'underline', 'fontSize': '16px', 'marginRight': 'auto'}
         ),
