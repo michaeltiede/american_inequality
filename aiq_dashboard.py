@@ -41,7 +41,7 @@ app.layout = html.Div([
         html.Div([
             html.H1(
                 "The American Inequality Project: County Comparison Dashboard",
-                style={'textAlign': 'center', 'marginTop': '20px', 'color': '#FFFFFF', 'fontFamily': 'Inter, sans-serif'}
+                style={'textAlign': 'center', 'marginTop': '20px', 'color': '#000000', 'fontFamily': 'Inter, sans-serif'}
             ),
         ], style={'flex': '1', 'display': 'flex', 'justifyContent': 'center'})
     ], style={'display': 'flex', 'alignItems': 'center'}),
@@ -126,7 +126,7 @@ app.layout = html.Div([
         ], style={'width': '48%', 'display': 'inline-block', 'padding-left': '2%'})  # Map on the right
     ], style={'display': 'flex', 'flex-direction': 'row'})
 ]# Cream background and padding for the entire dashboard
-, style={'backgroundColor': '#F7E1C4', 'padding': '20px', 'fontFamily': 'Inter, sans-serif'})  
+, style={'backgroundColor': '#FFFFFF', 'padding': '20px', 'fontFamily': 'Inter, sans-serif'})  
 
 # Callback to update the county dropdown based on the state selected
 @app.callback(
@@ -222,12 +222,14 @@ def display_output(state_input, county_input, variable_input):
             style_header={
                 'backgroundColor': '#FFF0E1',
                 'border': '1px solid #8B4513',
+                'borderRadius': '5px',  # Rounded corners
                 'fontFamily': 'Inter, sans-serif',
                 'fontWeight': 'bold' 
             },
             style_cell={
                 'backgroundColor': '#FFF0E1',
                 'border': '1px solid #8B4513',
+                'borderRadius': '5px',  # Rounded corners
                 'fontFamily': 'Inter, sans-serif'
             }
         )
@@ -245,6 +247,7 @@ def display_output(state_input, county_input, variable_input):
         style_header={
             'backgroundColor': '#FFF0E1',
             'border': '1px solid #8B4513',
+            'borderRadius': '5px',  # Rounded corners
             'fontFamily': 'Inter, sans-serif',
             'fontWeight': 'bold' 
         },
