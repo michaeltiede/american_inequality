@@ -41,7 +41,7 @@ app.layout = html.Div([
         html.Div([
             html.H1(
                 "The American Inequality Project: County Comparison Dashboard",
-                style={'textAlign': 'center', 'marginTop': '20px', 'color': '#4A4A4A', 'fontFamily': 'Inter, sans-serif'}
+                style={'textAlign': 'center', 'marginTop': '20px', 'color': '#FFFFFF', 'fontFamily': 'Inter, sans-serif'}
             ),
         ], style={'flex': '1', 'display': 'flex', 'justifyContent': 'center'})
     ], style={'display': 'flex', 'alignItems': 'center'}),
